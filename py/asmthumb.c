@@ -35,7 +35,23 @@
 
 #include "py/mpstate.h"
 #include "py/asmthumb.h"
-#include "py/misc.h"
+
+#ifdef _MSC_VER
+#include <intrin.h>
+
+static uint32_t mp_clz(uint32_t x) {
+    unsigned long lz = 0;
+    return _BitScanReverse(&lz, x) ? (sizeof(x) * 8 - 1) - lz : 0;
+}
+
+static uint32_t mp_ctz(uint32_t x) {
+    unsigned long tz = 0;
+    return _BitScanForward(&tz, x) ? tz : 0;
+}
+#else
+#define mp_clz(x) __builtin_clz(x)
+#define mp_ctz(x) __builtin_ctz(x)
+#endif
 
 #define UNSIGNED_FIT5(x) ((uint32_t)(x) < 32)
 #define UNSIGNED_FIT7(x) ((uint32_t)(x) < 128)
@@ -450,12 +466,12 @@ static void asm_thumb_add_reg_reg_offset(asm_thumb_t *as, uint reg_dest, uint re
             asm_thumb_lsl_rlo_rlo_i5(as, reg_dest, reg_dest, offset_shift);
             asm_thumb_add_rlo_rlo_rlo(as, reg_dest, reg_dest, reg_base);
         } else if (reg_dest != reg_base) {
-            asm_thumb_mov_reg_i32_optimised(as, reg_dest, offset << offset_shift);
-            asm_thumb_add_rlo_rlo_rlo(as, reg_dest, reg_dest, reg_base);
+            asm_thumb_mov_rlo_i16(as, reg_dest, offset << offset_shift);
+            asm_thumb_add_rlo_rlo_rlo(as, reg_dest, reg_dest, reg_dest);
         } else {
             uint reg_other = reg_dest ^ 7;
             asm_thumb_op16(as, OP_PUSH_RLIST((1 << reg_other)));
-            asm_thumb_mov_reg_i32_optimised(as, reg_other, offset << offset_shift);
+            asm_thumb_mov_rlo_i16(as, reg_other, offset << offset_shift);
             asm_thumb_add_rlo_rlo_rlo(as, reg_dest, reg_dest, reg_other);
             asm_thumb_op16(as, OP_POP_RLIST((1 << reg_other)));
         }
