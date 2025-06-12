@@ -276,6 +276,7 @@ SRC_C += \
 	lcd.c \
 	esc.c \
 	td01-lcd.c \
+	td99-kbd.c \
 	td02-rtc.c \
 	td22-xor.c \
 	accel.c \

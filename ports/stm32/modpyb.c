@@ -53,6 +53,7 @@
 #include "servo.h"
 #include "dac.h"
 #include "td01-lcd.h"
+#include "td99-kbd.h"
 #include "td22-xor.h"
 #include "usb.h"
 #include "portmodules.h"
@@ -266,6 +267,7 @@ static const mp_rom_map_elem_t tiger_module_globals_table[] = {
 
     #if MICROPY_HW_HAS_LCD
     { MP_ROM_QSTR(MP_QSTR_LCD1), MP_ROM_PTR(&tiger_lcd_type) },
+	{ MP_ROM_QSTR(MP_QSTR_Keyboard), MP_ROM_PTR(&tiger_kbd_type) },
     #endif
 	
     #if MICROPY_HW_HAS_XOR

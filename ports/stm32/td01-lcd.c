@@ -91,7 +91,7 @@ static volatile bool inst_ok = false;
 static volatile uint8_t interrupt = 0xFF;
 
 static bool lcd_on = true;
-static bool kbd_on = true;
+static bool kbd_on = false;
 static bool bp_on = false;
 
 bool xports_flg = false;
@@ -368,10 +368,10 @@ static void ddr_int(void)
 {
 	uint8_t ch = 0;
 	
-	if(kbd_on)
-	{
-		kbd_scan();
-	}
+	//if(kbd_on)
+	//{
+	//	kbd_scan();
+	//}
 	
 	if(bp_on && ++bell_counter == 10)
 	{

@@ -1,0 +1,6 @@
+1. MPFlash-Ordner in die Umgebung kopieren, wo j-Link installiert ist (z.B. Windows11)
+2. Firmware kompilieren (siehe kompilieren.txt)
+3. Nach erfolgreichem Kompilieren:
+	-> ports/stm32/build-Tiger_Plus/firmware0.bin und ports/stm/build-Tiger_Plus/firmware1.bin kopieren in den
+	   Ordner MPFlash
+4. flash.bat ausführen und warten, bis fertig (j-Link, MCU müssen angeschlossen sein)	
