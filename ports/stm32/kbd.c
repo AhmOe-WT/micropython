@@ -84,7 +84,7 @@ static bool _KB_SHIFT_LOCK = INACTIVE;
 
 static bool _KB_SHIFT = INACTIVE;
 
-static bool _KB_SHIFT_TOGGLE = INACTIVE; 
+static bool _KB_SHIFT_TOGGLE = INACTIVE;
 
 static bool _KB_KEY_FLG = INACTIVE;
 
@@ -147,13 +147,15 @@ shared_iram_s *shared_iram;
 
 void kbd_init(void)
 {
-	for(uint8_t i = 0; i < 128; i++)
-	{
+    for(uint8_t i = 0; i < 128; i++)
+    {
         RAM1_KEY_CODES[i] = i;
         RAM1_KEY_SCODES[i] = 128 + i;
-	}
-	shared_iram = MP_STATE_PORT(SHARED_IRAM_ADDR);//MP_STATE_PORT NEEDS TO BE DONE at RUNTIME
+    }
+    shared_iram = MP_STATE_PORT(SHARED_IRAM_ADDR); // MP_STATE_PORT NEEDS TO BE DONE at RUNTIME
 
+    // ensure LED off at startup
+    kbd_led();
 }
 
 void kbd_set_key_table(uint8_t *params)
@@ -201,6 +203,11 @@ static void kbd_add_to_buf(void)
 
     uint8_t* key_codes = RAM1_KEY_CODES;
 
+    bool use_shift = _KB_SHIFT_TOGGLE;
+    if(_KB_SHIFT == ACTIVE) {
+        use_shift = !use_shift;
+    }
+
     if(_KB_CTRL == ACTIVE)
     {
         if((_KB_KEY_ATTR & NC) != 0)
@@ -208,7 +215,7 @@ static void kbd_add_to_buf(void)
             return;
         }
 
-        if(_KB_SHIFT_LOCK==ACTIVE || _KB_SHIFT==ACTIVE || _KB_SHIFT_TOGGLE==ACTIVE)
+        if(use_shift)
         {
             if((_KB_KEY_ATTR & NS) != 0)
             {
@@ -231,7 +238,7 @@ static void kbd_add_to_buf(void)
     }
 
 
-    if(_KB_SHIFT_LOCK == ACTIVE || _KB_SHIFT == ACTIVE || _KB_SHIFT_TOGGLE == ACTIVE)
+    if(use_shift)
     {
         key_codes = RAM1_KEY_SCODES;
     }
@@ -431,15 +438,10 @@ static void process_current_column(void)
 
 static void process_full_run(void)
 {
-    // SHIFT, SHIFT_LOCK, CTRL
-    if(_KB_SHIFT == ACTIVE && _KB_PREV_SHIFT == ACTIVE)
+    // handle Caps Lock toggle on key press
+    if(_KB_SHIFT_LOCK == ACTIVE && _KB_PREV_SHIFT_LOCK == INACTIVE)
     {
-        _KB_SHIFT_TOGGLE = INACTIVE;
-        kbd_led();
-    }
-    if(_KB_SHIFT_LOCK == ACTIVE && _KB_PREV_SHIFT_LOCK == ACTIVE)
-    {
-        _KB_SHIFT_TOGGLE = ACTIVE;
+        _KB_SHIFT_TOGGLE = !_KB_SHIFT_TOGGLE;
         kbd_led();
     }
     _KB_PREV_SHIFT_LOCK = _KB_SHIFT_LOCK;
