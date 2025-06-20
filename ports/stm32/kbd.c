@@ -74,10 +74,6 @@ static uint8_t RAM1_KEY_ATTRIB[] = {
 #define INACTIVE  false	// In-Aktiv
 #define ACTIVE	  true	// Aktiv
 
-static bool _KB_PREV_SHIFT_LOCK = INACTIVE; 
-
-static bool _KB_PREV_SHIFT = INACTIVE;
-
 static bool _KB_CTRL = INACTIVE;
 
 static bool _KB_SHIFT_LOCK = INACTIVE;
@@ -147,12 +143,14 @@ shared_iram_s *shared_iram;
 
 void kbd_init(void)
 {
-	for(uint8_t i = 0; i < 128; i++)
-	{
+    for(uint8_t i = 0; i < 128; i++) {
         RAM1_KEY_CODES[i] = i;
         RAM1_KEY_SCODES[i] = 128 + i;
-	}
-	shared_iram = MP_STATE_PORT(SHARED_IRAM_ADDR);//MP_STATE_PORT NEEDS TO BE DONE at RUNTIME
+    }
+    shared_iram = MP_STATE_PORT(SHARED_IRAM_ADDR); // MP_STATE_PORT NEEDS TO BE DONE at RUNTIME
+
+    // Ensure the keyboard starts in lower case mode
+    _KB_SHIFT_TOGGLE = INACTIVE;
 
 }
 
@@ -419,12 +417,16 @@ static void process_current_column(void)
                 }
                 case SL:
                 {
-                    _KB_SHIFT_LOCK = ACTIVE;
+                    // The board labels the function key as "Shift-Lock", but
+                    // in practice it behaves like a momentary Shift key.
+                    // Swap the handling so the function key acts as Shift
+                    // and the dedicated Shift button toggles Caps Lock.
+                    _KB_SHIFT = ACTIVE;
                     break;
                 }
                 case SK:
                 {
-                    _KB_SHIFT = ACTIVE;
+                    _KB_SHIFT_LOCK = ACTIVE;
                     break;
                 }
             }
@@ -437,18 +439,21 @@ static void process_current_column(void)
 static void process_full_run(void)
 {
     // SHIFT, SHIFT_LOCK, CTRL
-    if(_KB_SHIFT == ACTIVE && _KB_PREV_SHIFT == ACTIVE)
-    {
-        _KB_SHIFT_TOGGLE = INACTIVE;
-        kbd_led();
-    }
-    if(_KB_SHIFT_LOCK == ACTIVE && _KB_PREV_SHIFT_LOCK == ACTIVE)
-    {
+    bool prev_toggle = _KB_SHIFT_TOGGLE;
+
+    if(_KB_SHIFT_LOCK == ACTIVE) {
         _KB_SHIFT_TOGGLE = ACTIVE;
+    } else {
+        _KB_SHIFT_TOGGLE = INACTIVE;
+    }
+
+    if(_KB_SHIFT == ACTIVE) {
+        _KB_SHIFT_TOGGLE = INACTIVE;
+    }
+
+    if(prev_toggle != _KB_SHIFT_TOGGLE) {
         kbd_led();
     }
-    _KB_PREV_SHIFT_LOCK = _KB_SHIFT_LOCK;
-    _KB_PREV_SHIFT = _KB_SHIFT;
 
     // "normal" key
     if(_KB_KEY_FLG == ACTIVE)
